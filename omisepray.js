@@ -56,8 +56,12 @@
     value: undefined,
     toFulfill: [],
     toReject: [],
+    finished: false,
 
     changeState: function(st, val) {
+      var i,
+          len;
+
       // No state changes from 'fulfilled' or 'rejected'
       if (this.fulfilled || this.rejected) {
         return;
@@ -66,9 +70,21 @@
       this[st] = true;
       this.value = val;
 
-      // If the promise has been fulfilled or rejected, it is no longer pending
-      if (st === "fulfilled" || st === "rejected") {
-        this.pending = false;
+      switch(st) {
+        case "fulfilled":
+          for (i = 0, len = toFulfill.length; i < len; i++) {
+            toFulfill[i](val);
+          }
+          this.pending = false;
+          break;
+        case "rejected":
+          for (i = 0, len = toReject.length; i < len; i++) {
+            toReject[i](val);
+          }
+          this.pending = false;
+          break;
+        default:
+        // no default
       }
     },
 
@@ -87,7 +103,7 @@
         onRejected = undefined;
       }
 
-      return true;
+      return promise;
     },
   };
 
