@@ -7,9 +7,6 @@
     "type": "git",
     "url": "https://github.com/mduvall/omisepray"
   },
-  "scripts": {
-    "test": "bash scripts/test.sh"
-  },
   "dependencies": {
   },
   "devDependencies": {

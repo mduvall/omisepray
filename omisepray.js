@@ -3,49 +3,25 @@
       Promise = function(func) {
         // TODO: add validation for func
         var promise = this,
-            resolvedPromise = function(val) {
-              if (!promise.pending) {
-                return;
-              }
-
-              asyncStateChange(promise, "fulfilled", val);
+            resolve = function(val) {
+              if (!promise.pending) { return; }
+              promise.changeState("fulfilled", val);
             },
 
-            rejectedPromise = function(val) {
-              if (!promise.pending) {
-                return;
-              }
-
-              asyncStateChange(promise, "rejected", val);
+            reject = function(val) {
+              if (!promise.pending) { return; }
+              promise.changeState("rejected", val);
             };
 
-        asyncStateChange(promise, "pending", null);
+        promise.changeState("pending", null);
 
         try {
           // Try to resolve the function and pass in the current promise
-          func(resolvedPromise, rejectedPromise);
+          func(resolve, reject);
         } catch(e) {
-          rejectedPromise("error");
+          reject("error");
         }
       };
-
-  function later(func, args) {
-    var f = function() {
-      func(args);
-    };
-
-    if (typeof setImmediate === "function") {
-      setImmediate(f);
-    } else {
-      setTimeout(f, 1);
-    }
-  }
-
-  function asyncStateChange(promise, state, val) {
-    later(function() {
-      promise.changeState(state, val);
-    });
-  }
 
   // Promises/A+ 2.1: Promise defines the "then" function
   Promise.prototype = {
@@ -72,16 +48,16 @@
 
       switch(st) {
         case "fulfilled":
-          for (i = 0, len = toFulfill.length; i < len; i++) {
-            toFulfill[i](val);
-          }
           this.pending = false;
+          for (i = 0, len = this.toFulfill.length; i < len; i++) {
+            this.toFulfill[i](val);
+          }
           break;
         case "rejected":
-          for (i = 0, len = toReject.length; i < len; i++) {
-            toReject[i](val);
-          }
           this.pending = false;
+          for (i = 0, len = this.toReject.length; i < len; i++) {
+            this.toReject[i](val);
+          }
           break;
         default:
         // no default
@@ -92,13 +68,13 @@
       var promise = new this.constructor(function() {});
 
       if (typeof onFulfilled === "function") {
-        toFulfill.push(onFulfilled);
+        this.toFulfill.push(onFulfilled);
       } else {
         onFulfilled = undefined;
       }
 
       if (typeof onRejected === "function") {
-        toReject.push(onRejected);
+        this.toReject.push(onRejected);
       } else {
         onRejected = undefined;
       }
